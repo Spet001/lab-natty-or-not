@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Cenários "Natty or Not"</title>
+    <!-- 1. Carrega o Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 2. Carrega a fonte Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Define a fonte Inter como padrão */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Estilo do spinner de carregamento */
+        .loader {
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #3b82f6; /* Blue 600 */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-6 md:p-12">
+    <div class="max-w-4xl mx-auto">
+
+        <!-- Cabeçalho -->
+        <header class="text-center mb-10">
+            <h1 class="text-3xl md:text-4xl font-bold text-blue-400">Desafio "Natty or Not"</h1>
+            <p class="text-lg md:text-xl text-gray-300 mt-2">Gerador de Cenários Ultra-Realistas</p>
+        </header>
+
+        <!-- Área de Exibição da Imagem -->
+        <main>
+            <div class="bg-gray-800 rounded-lg shadow-2xl p-4 min-h-[300px] md:min-h-[500px] flex items-center justify-center mb-8">
+                <!-- Loader -->
+                <div id="loader" class="flex-col items-center justify-center hidden">
+                    <div class="loader mb-4"></div>
+                    <span class="text-gray-400">Gerando imagem... Isso pode levar um momento.</span>
+                </div>
+                <!-- Imagem Gerada -->
+                <img id="image-display" src="https://placehold.co/800x500/111827/4b5563?text=Sua+Imagem+Realista+Aparecer%C3%A1+Aqui" alt="Imagem gerada" class="rounded-md max-w-full h-auto object-contain">
+            </div>
+
+            <!-- Prompts Pré-definidos -->
+            <div class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-100">Testar Cenários</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                    <button class="preset-btn p-4 bg-blue-600 hover:bg-blue-700 rounded-lg text-left transition-all duration-200 shadow-lg" 
+                            data-prompt="Uma foto macro de uma gota de orvalho em uma folha verde, refletindo o sol da manhã, fotorrealista, 8k, alta definição, iluminação cinematográfica.">
+                        <span class="font-semibold">🌿 Gota de Orvalho</span>
+                        <span class="text-sm text-blue-100 block mt-1">Macro de uma folha verde.</span>
+                    </button>
+                    <button class="preset-btn p-4 bg-blue-600 hover:bg-blue-700 rounded-lg text-left transition-all duration-200 shadow-lg"
+                            data-prompt="Uma biblioteca moderna com janelas do chão ao teto, luz solar entrando, interior de madeira, estilo escandinavo, foto de arquitetura, ultra-realista, 8k.">
+                        <span class="font-semibold">📚 Biblioteca Moderna</span>
+                        <span class="text-sm text-blue-100 block mt-1">Interior com luz solar.</span>
+                    </button>
+                    <button class="preset-btn p-4 bg-blue-600 hover:bg-blue-700 rounded-lg text-left transition-all duration-200 shadow-lg"
+                            data-prompt="Um close-up extremo de um olho humano, mostrando a íris em detalhes incríveis, iluminação de estúdio, fotorrealista, reflexo de uma janela na córnea.">
+                        <span class="font-semibold">👁️ Close-up de Olho</span>
+                        <span class="text-sm text-blue-100 block mt-1">Detalhes da íris humana.</span>
+                    </button>
+                    <button class="preset-btn p-4 bg-blue-600 hover:bg-blue-700 rounded-lg text-left transition-all duration-200 shadow-lg"
+                            data-prompt="Uma rua de paralelepípedos em uma cidade europeia antiga ao anoitecer, luzes de rua acesas, atmosfera nebulosa, foto de longa exposição, realista, 8k.">
+                        <span class="font-semibold">🌆 Rua ao Anoitecer</span>
+                        <span class="text-sm text-blue-100 block mt-1">Cidade europeia nebulosa.</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Prompt Customizado -->
+            <div>
+                <h2 class="text-2xl font-semibold mb-4 text-gray-100">Seu Próprio Prompt</h2>
+                <form id="custom-form" class="flex flex-col md:flex-row gap-4">
+                    <input type="text" id="custom-prompt" placeholder="Descreva um cenário ultra-realista... (ex: um astronauta em marte)" 
+                           class="flex-grow p-4 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400">
+                    <button type="submit" id="generate-btn" 
+                            class="p-4 bg-green-600 hover:bg-green-700 rounded-lg font-semibold transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                        Gerar Imagem
+                    </button>
+                </form>
+            </div>
+
+            <!-- Mensagem de Erro -->
+            <p id="error-message" class="text-red-400 mt-6 text-center hidden"></p>
+
+        </main>
+    </div>
+
+    <script>
+        // --- Configuração da API ---
+        // DEIXE A CHAVE EM BRANCO. A plataforma irá injetá-la.
+        const apiKey = ""; 
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
+
+        // --- Referências do DOM ---
+        const loader = document.getElementById('loader');
+        const imageDisplay = document.getElementById('image-display');
+        const errorMessage = document.getElementById('error-message');
+        const customForm = document.getElementById('custom-form');
+        const customPrompt = document.getElementById('custom-prompt');
+        const generateBtn = document.getElementById('generate-btn');
+        const presetBtns = document.querySelectorAll('.preset-btn');
+        const allButtons = [generateBtn, ...presetBtns];
+
+        // --- Funções Auxiliares ---
+
+        /**
+         * Mostra ou esconde o loader e gerencia o estado dos botões.
+         * @param {boolean} isLoading - Se deve mostrar o loader.
+         */
+        function showLoading(isLoading) {
+            loader.classList.toggle('hidden', !isLoading);
+            imageDisplay.classList.toggle('hidden', isLoading);
+            // Desabilita todos os botões durante o carregamento
+            allButtons.forEach(btn => {
+                btn.disabled = isLoading;
+                btn.classList.toggle('disabled:opacity-50', isLoading);
+                btn.classList.toggle('disabled:cursor-not-allowed', isLoading);
+            });
+        }
+
+        /**
+         * Mostra uma mensagem de erro.
+         * @param {string} message - A mensagem de erro a ser exibida.
+         */
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.remove('hidden');
+        }
+
+        /**
+         * Limpa mensagens de erro.
+         */
+        function clearError() {
+            errorMessage.textContent = '';
+            errorMessage.classList.add('hidden');
+        }
+
+        /**
+         * Tenta fazer a requisição com retentativa exponencial.
+         * @param {number} retries - Número máximo de tentativas.
+         * @param {number} delay - Delay inicial em ms.
+         */
+        async function fetchWithBackoff(url, options, retries = 5, delay = 1000) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    
+                    // Se OK, retorna a resposta
+                    if (response.ok) return response;
+
+                    // Se for erro de "rate limit" ou servidor, espera e tenta de novo
+                    if (response.status === 429 || response.status >= 500) {
+                        console.warn(`Tentativa ${i + 1}/${retries} falhou com status ${response.status}. Tentando novamente em ${delay / 1000}s.`);
+                        await new Promise(res => setTimeout(res, delay));
+                        delay *= 2; // Aumenta o delay
+                    } else {
+                        // Se for outro erro (ex: 400 Bad Request), não adianta tentar de novo
+                        throw new Error(`Erro de cliente ou API: ${response.statusText}`);
+                    }
+                } catch (error) {
+                    // Erro de rede
+                    if (i === retries - 1) throw error; // Joga o erro na última tentativa
+                    await new Promise(res => setTimeout(res, delay));
+                    delay *= 2;
+                }
+            }
+            throw new Error("Máximo de tentativas atingido.");
+        }
+
+
+        // --- Função Principal de Geração ---
+
+        /**
+         * Chama a API do Imagen 3 para gerar uma imagem.
+         * @param {string} prompt - O prompt para a geração da imagem.
+         */
+        async function generateImage(prompt) {
+            if (!prompt) {
+                showError("Por favor, insira um prompt.");
+                return;
+            }
+
+            showLoading(true);
+            clearError();
+
+            const payload = {
+                instances: [{ "prompt": prompt }],
+                parameters: { "sampleCount": 1 }
+            };
+
+            try {
+                const response = await fetchWithBackoff(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (result.predictions && result.predictions.length > 0 && result.predictions[0].bytesBase64Encoded) {
+                    // Sucesso! Exibe a imagem.
+                    const imageData = result.predictions[0].bytesBase64Encoded;
+                    imageDisplay.src = `data:image/png;base64,${imageData}`;
+                } else {
+                    // A API respondeu, mas não enviou a imagem esperada
+                    console.error("Resposta da API inesperada:", result);
+                    showError("A API não retornou uma imagem. Tente um prompt diferente.");
+                }
+
+            } catch (error) {
+                console.error("Erro ao chamar a API:", error);
+                showError("Não foi possível gerar a imagem. Verifique sua conexão ou a configuração da API.");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // --- Event Listeners ---
+
+        // Listener para o formulário customizado
+        customForm.addEventListener('submit', (e) => {
+            e.preventDefault(); // Impede o recarregamento da página
+            const prompt = customPrompt.value.trim();
+            // Adiciona um modificador para realismo
+            const realisticPrompt = `${prompt}, fotorrealista, 8k, alta definição, iluminação de qualidade de estúdio`;
+            generateImage(realisticPrompt);
+        });
+
+        // Listeners para os botões pré-definidos
+        presetBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const prompt = btn.dataset.prompt;
+                generateImage(prompt);
+            });
+        });
+
+        // Opcional: Gera uma imagem inicial ao carregar a página
+        window.addEventListener('load', () => {
+            // Pega o prompt do primeiro botão pré-definido
+            const initialPrompt = presetBtns[0].dataset.prompt;
+            generateImage(initialPrompt);
+        });
+
+    </script>
+</body>
+</html>
